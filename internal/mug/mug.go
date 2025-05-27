@@ -1,15 +1,14 @@
 package mug
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
-	"os/exec"
-	"strconv"
-	"strings"
+
+	"tinygo.org/x/bluetooth"
 )
 
 const (
+	serviceUUID     = "fc543622-236c-4c94-8fa9-944a3e5353fa"
 	uuidCurrentTemp = "fc540002-236c-4c94-8fa9-944a3e5353fa"
 	uuidTargetTemp  = "fc540003-236c-4c94-8fa9-944a3e5353fa"
 	uuidBattery     = "fc540007-236c-4c94-8fa9-944a3e5353fa"
@@ -51,30 +50,49 @@ func ReadBatteryPercent(mac string) (int, error) {
 }
 
 func readCharacteristic(mac, uuid string) ([]byte, error) {
-	out, err := exec.Command("gatttool", "-b", mac, "--char-read", "--uuid", uuid).Output()
+	adapter := bluetooth.DefaultAdapter
+	if err := adapter.Enable(); err != nil {
+		return nil, err
+	}
+
+	m, err := bluetooth.ParseMAC(mac)
 	if err != nil {
 		return nil, err
 	}
-	return parseHexOutput(string(out))
-}
 
-func parseHexOutput(s string) ([]byte, error) {
-	idx := strings.Index(s, ":")
-	if idx >= 0 {
-		s = s[idx+1:]
+	dev, err := adapter.Connect(bluetooth.Address{MACAddress: bluetooth.MACAddress{MAC: m}}, bluetooth.ConnectionParams{})
+	if err != nil {
+		return nil, err
 	}
-	s = strings.TrimSpace(s)
-	parts := strings.Split(s, " ")
-	buf := bytes.Buffer{}
-	for _, p := range parts {
-		if p == "" {
-			continue
-		}
-		v, err := strconv.ParseUint(p, 16, 8)
-		if err != nil {
-			return nil, err
-		}
-		buf.WriteByte(byte(v))
+	defer dev.Disconnect()
+
+	svcUUID, err := bluetooth.ParseUUID(serviceUUID)
+	if err != nil {
+		return nil, err
 	}
-	return buf.Bytes(), nil
+	charUUID, err := bluetooth.ParseUUID(uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	svcs, err := dev.DiscoverServices([]bluetooth.UUID{svcUUID})
+	if err != nil {
+		return nil, err
+	}
+	if len(svcs) == 0 {
+		return nil, fmt.Errorf("service not found")
+	}
+	chars, err := svcs[0].DiscoverCharacteristics([]bluetooth.UUID{charUUID})
+	if err != nil {
+		return nil, err
+	}
+	if len(chars) == 0 {
+		return nil, fmt.Errorf("characteristic not found")
+	}
+	buf := make([]byte, 8)
+	n, err := chars[0].Read(buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf[:n], nil
 }

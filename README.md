@@ -33,7 +33,7 @@ All commands have a service UUID of `fc543622236c4c948fa9944a3e5353fa`
 
 ## CLI Tool
 
-A small command-line program is included to interact with an Ember Mug on Linux. It relies on the `gatttool` utility from BlueZ to read mug characteristics.
+A small command-line program is included to interact with an Ember Mug on Linux and other platforms. It now uses the Go Bluetooth library `tinygo.org/x/bluetooth`, so no external utilities are required.
 
 ### Build
 
