@@ -9,10 +9,13 @@ import (
 )
 
 const (
-	serviceUUID     = "fc543622-236c-4c94-8fa9-944a3e5353fa"
-	uuidCurrentTemp = "fc540002-236c-4c94-8fa9-944a3e5353fa"
-	uuidTargetTemp  = "fc540003-236c-4c94-8fa9-944a3e5353fa"
-	uuidBattery     = "fc540007-236c-4c94-8fa9-944a3e5353fa"
+	serviceUUID         = "fc543622-236c-4c94-8fa9-944a3e5353fa"
+	uuidCurrentTemp     = "fc540002-236c-4c94-8fa9-944a3e5353fa"
+	uuidTargetTemp      = "fc540003-236c-4c94-8fa9-944a3e5353fa"
+	uuidBattery         = "fc540007-236c-4c94-8fa9-944a3e5353fa"
+	uuidMugName         = "fc540001-236c-4c94-8fa9-944a3e5353fa"
+	uuidMugColor        = "fc540014-236c-4c94-8fa9-944a3e5353fa"
+	uuidTemperatureUnit = "fc540004-236c-4c94-8fa9-944a3e5353fa"
 )
 
 func ReadCurrentTemp(mac string) (float64, error) {
@@ -50,6 +53,35 @@ func ReadBatteryPercent(mac string) (int, error) {
 	return int(b[0]), nil
 }
 
+func SetTargetTemp(mac string, temp float64) error {
+	v := uint16(temp * 100)
+	buf := make([]byte, 2)
+	binary.LittleEndian.PutUint16(buf, v)
+	return writeCharacteristic(mac, uuidTargetTemp, buf)
+}
+
+func SetMugName(mac, name string) error {
+	if len(name) > 14 {
+		name = name[:14]
+	}
+	return writeCharacteristic(mac, uuidMugName, []byte(name))
+}
+
+func SetMugColor(mac string, color []byte) error {
+	if len(color) != 4 {
+		return fmt.Errorf("color must be 4 bytes RGBA")
+	}
+	return writeCharacteristic(mac, uuidMugColor, color)
+}
+
+func SetTemperatureUnit(mac string, fahrenheit bool) error {
+	val := byte(0)
+	if fahrenheit {
+		val = 1
+	}
+	return writeCharacteristic(mac, uuidTemperatureUnit, []byte{val})
+}
+
 func readCharacteristic(mac, uuid string) ([]byte, error) {
 	c, err := getConnection(mac)
 	if err != nil {
@@ -67,6 +99,21 @@ func readCharacteristic(mac, uuid string) ([]byte, error) {
 		return nil, err
 	}
 	return buf[:n], nil
+}
+
+func writeCharacteristic(mac, uuid string, data []byte) error {
+	c, err := getConnection(mac)
+	if err != nil {
+		return err
+	}
+
+	char, ok := c.chars[uuid]
+	if !ok {
+		return fmt.Errorf("characteristic not cached")
+	}
+
+	_, err = char.WriteWithoutResponse(data)
+	return err
 }
 
 type connection struct {
@@ -124,7 +171,14 @@ func getConnection(mac string) (*connection, error) {
 	}
 
 	chars := make(map[string]bluetooth.DeviceCharacteristic)
-	for _, u := range []string{uuidCurrentTemp, uuidTargetTemp, uuidBattery} {
+	for _, u := range []string{
+		uuidCurrentTemp,
+		uuidTargetTemp,
+		uuidBattery,
+		uuidMugName,
+		uuidMugColor,
+		uuidTemperatureUnit,
+	} {
 		uuidParsed, err := bluetooth.ParseUUID(u)
 		if err != nil {
 			dev.Disconnect()

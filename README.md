@@ -47,4 +47,10 @@ $ go build ./cmd/embermug
 $ ./embermug status --mac AA:BB:CC:DD:EE:FF
 ```
 
+Set the target temperature to 55°C:
+
+```bash
+$ ./embermug set-target-temp --mac AA:BB:CC:DD:EE:FF --temp 55
+```
+
 This will print the current temperature, target temperature and battery percentage.
