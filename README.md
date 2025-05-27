@@ -31,3 +31,20 @@ All commands have a service UUID of `fc543622236c4c948fa9944a3e5353fa`
 * [Firmware & hardware versions](./docs/push-events.md)
 
 
+## CLI Tool
+
+A small command-line program is included to interact with an Ember Mug on Linux. It relies on the `gatttool` utility from BlueZ to read mug characteristics.
+
+### Build
+
+```bash
+$ go build ./cmd/embermug
+```
+
+### Example
+
+```bash
+$ ./embermug status --mac AA:BB:CC:DD:EE:FF
+```
+
+This will print the current temperature, target temperature and battery percentage.
