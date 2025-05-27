@@ -41,16 +41,25 @@ A small command-line program is included to interact with an Ember Mug on Linux 
 $ go build ./cmd/embermug
 ```
 
+You can store your mug's MAC address in `~/.config/embermug.json` to avoid
+passing it to every command:
+
+```json
+{
+  "mac": "AA:BB:CC:DD:EE:FF"
+}
+```
+
 ### Example
 
 ```bash
-$ ./embermug status --mac AA:BB:CC:DD:EE:FF
+$ ./embermug status        # add --mac <MAC> if no config file
 ```
 
 Set the target temperature to 55°C:
 
 ```bash
-$ ./embermug set-target-temp --mac AA:BB:CC:DD:EE:FF --temp 55
+$ ./embermug set-target-temp --temp 55   # add --mac <MAC> if no config file
 ```
 
 This will print the current temperature, target temperature and battery percentage.

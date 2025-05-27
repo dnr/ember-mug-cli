@@ -1,11 +1,13 @@
 package main
 
 import (
-	"embermug/internal/mug"
 	"encoding/hex"
 	"flag"
 	"fmt"
 	"os"
+
+	"embermug/internal/config"
+	"embermug/internal/mug"
 )
 
 func main() {
@@ -44,9 +46,17 @@ func usage() {
 	fmt.Println("  set-color --mac <MAC> --color <RRGGBBAA>")
 }
 
+func defaultMAC() string {
+	mac, err := config.DefaultMAC()
+	if err != nil {
+		return ""
+	}
+	return mac
+}
+
 func status(args []string) {
 	fs := flag.NewFlagSet("status", flag.ExitOnError)
-	mac := fs.String("mac", "", "MAC address of the mug")
+	mac := fs.String("mac", defaultMAC(), "MAC address of the mug")
 	fs.Parse(args)
 	if *mac == "" {
 		fmt.Println("--mac is required")
@@ -78,7 +88,7 @@ func status(args []string) {
 
 func getCmd(args []string) {
 	fs := flag.NewFlagSet("get", flag.ExitOnError)
-	mac := fs.String("mac", "", "MAC address of the mug")
+	mac := fs.String("mac", defaultMAC(), "MAC address of the mug")
 	charName := fs.String("char", "", "Characteristic name (current-temp,target-temp,battery)")
 	fs.Parse(args)
 	if *mac == "" || *charName == "" {
@@ -116,7 +126,7 @@ func getCmd(args []string) {
 
 func setTargetTempCmd(args []string) {
 	fs := flag.NewFlagSet("set-target-temp", flag.ExitOnError)
-	mac := fs.String("mac", "", "MAC address of the mug")
+	mac := fs.String("mac", defaultMAC(), "MAC address of the mug")
 	temp := fs.Float64("temp", 0, "Target temperature in °C")
 	fs.Parse(args)
 	if *mac == "" {
@@ -132,7 +142,7 @@ func setTargetTempCmd(args []string) {
 
 func setNameCmd(args []string) {
 	fs := flag.NewFlagSet("set-name", flag.ExitOnError)
-	mac := fs.String("mac", "", "MAC address of the mug")
+	mac := fs.String("mac", defaultMAC(), "MAC address of the mug")
 	name := fs.String("name", "", "Mug name")
 	fs.Parse(args)
 	if *mac == "" || *name == "" {
@@ -148,7 +158,7 @@ func setNameCmd(args []string) {
 
 func setColorCmd(args []string) {
 	fs := flag.NewFlagSet("set-color", flag.ExitOnError)
-	mac := fs.String("mac", "", "MAC address of the mug")
+	mac := fs.String("mac", defaultMAC(), "MAC address of the mug")
 	colorHex := fs.String("color", "", "Color in RRGGBBAA hex format")
 	fs.Parse(args)
 	if *mac == "" || *colorHex == "" {
