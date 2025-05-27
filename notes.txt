@@ -1,0 +1,8 @@
+
+CLI application:
+
+This is a command-line tool written in Go that allows interacting with an Ember
+mug using the Bluetooth protocol documented in this repo.
+
+It should work on Linux.
+
